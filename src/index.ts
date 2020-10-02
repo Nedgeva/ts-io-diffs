@@ -1,3 +1,4 @@
+import prettier from 'prettier';
 import * as ts from 'typescript';
 import {
 	isPrimitiveType,
@@ -200,7 +201,7 @@ export function getValidatorsFromFileNames() {
 		}
 	}
 
-	// console.log(generateCheckValueChangedInPathInterface(deepestIndex));
+	console.log(prettier.format(generateCheckValueChangedInPathInterface(deepestIndex), { parser: 'typescript' }));
 
 	return result.join('\n\n');
 }
