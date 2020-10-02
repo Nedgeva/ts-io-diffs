@@ -11,7 +11,7 @@ export const generateCheckValueChangedInPathInterface = (overloads: number) =>
 		${[...Array(overloads)].map((_, i) => generateCheckValueChangedInPathInterfaceOverloads(overloads - i)).join('\n')}
 }`;
 
-export const utils = `
+export const diffUtils = `
 import { Operation, ReplaceOperation, compare } from 'fast-json-patch';
 import { Predicate, constant } from 'fp-ts/lib/function';
 import { getOrElse, none, some } from 'fp-ts/lib/Option';

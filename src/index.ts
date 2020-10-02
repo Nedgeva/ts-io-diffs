@@ -16,7 +16,7 @@ import {
 } from './type';
 import { extractFlags } from './flags';
 import { defaultConfig, TsToIoConfig, DEFAULT_FILE_NAME, getCliConfig, displayHelp } from './config';
-import { generateCheckValueChangedInPathInterface } from './comparer/comparer.utils';
+import { diffUtils, generateCheckValueChangedInPathInterface } from './comparer/comparer.utils';
 
 let foundKeypaths: string[][] = [];
 let bufferKeypath: string[] = [];
@@ -137,6 +137,7 @@ function handleDeclaration(
 		bufferKeypath = [];
 		activeIndex = 0;
 
+		// move out from handleDeclaration
 		processTypeForDiffPathBuilder(checker, type);
 
 		const currentIterationDeepestIndex = foundKeypaths.reduce((acc, v) => (v.length > acc ? v.length : acc), 0);
@@ -189,19 +190,30 @@ export function getValidatorsFromString(source: string, config = { ...defaultCon
 
 export function getValidatorsFromFileNames() {
 	const config = getCliConfig();
+
 	if (!config.fileNames.length) {
 		return displayHelp();
 	}
+
 	const program = ts.createProgram(config.fileNames, compilerOptions);
 	const checker = program.getTypeChecker();
-	const result = config.includeHeader ? [getImports()] : [];
+	const result: string[] = [];
+
 	for (const sourceFile of program.getSourceFiles()) {
 		if (!sourceFile.isDeclarationFile) {
 			ts.forEachChild(sourceFile, visit(checker, config, result));
 		}
 	}
 
-	console.log(prettier.format(generateCheckValueChangedInPathInterface(deepestIndex), { parser: 'typescript' }));
+	// if (config.includeDiffCheck) {
 
-	return result.join('\n\n');
+	result.unshift(generateCheckValueChangedInPathInterface(deepestIndex));
+
+	result.unshift(diffUtils);
+
+	if (config.includeHeader) {
+		result.unshift(getImports());
+	}
+
+	return prettier.format(result.join('\n\n'), { parser: 'typescript' });
 }
