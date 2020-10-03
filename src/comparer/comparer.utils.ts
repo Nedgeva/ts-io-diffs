@@ -11,6 +11,14 @@ export const generateCheckValueChangedInPathInterface = (overloads: number) =>
 		${[...Array(overloads)].map((_, i) => generateCheckValueChangedInPathInterfaceOverloads(overloads - i)).join('\n')}
 }`;
 
+export const makeLookupForChangedPathUtils = (allKeyPaths: string[][], codecName: string) =>
+	allKeyPaths.map(
+		keyPaths =>
+			`const is${keyPaths.join('')}In${codecName}Changed = lookupForChangedPathsIn${codecName}(['${keyPaths.join(
+				"', '",
+			)}'])`,
+	);
+
 export const diffUtils = `
 import { Operation, ReplaceOperation, compare } from 'fast-json-patch';
 import { Predicate, constant } from 'fp-ts/lib/function';
@@ -23,6 +31,19 @@ const getOrConstant = <A>(a: A) => getOrElse(constant<A>(a));
 const isBlank: Predicate<string> = value => !value.trim().length;
 
 const isReplaceOperation = (op: Operation): op is ReplaceOperation<unknown> => op.op === 'replace';
+
+export const getPathsOfEncodedChangedValues = <T>(prevValue: T, currValue: T): string[] =>
+	compare(prevValue, currValue)
+		.filter(operation => operation.op === 'replace')
+		.map(operation => operation.path);
+
+export const getPathsOfChangedValues = <T, O>(encoder: Encoder<T, O>, prevValue: T, currValue: T): string[] => {
+	// restore original JSON representation of model
+	const prevValueEncoded = encoder.encode(prevValue);
+	const currValueEncoded = encoder.encode(currValue);
+
+	return getPathsOfEncodedChangedValues(prevValueEncoded, currValueEncoded);
+};
 
 const getPatchesOfChangedValues = <T, O>(
 	encoder: Encoder<T, O>,
@@ -42,6 +63,10 @@ const getPatchesOfChangedValues = <T, O>(
 export type ChangeType = 'NO_CHANGES_FOUND' | 'REPLACED' | 'REMOVED';
 
 const getKeyPaths = (keys: unknown[]) => \`/\${keys.join('/')}\`;
+
+export const checkIfValueChangedInRootPath = <S>(paths: string[]): CheckValueChangedInPath<S, boolean> => (
+	keys: unknown[],
+) => keys.some((v, i, a) => paths.includes(getKeyPaths(a.slice(0, i))));
 
 export const checkIfValueChangedInPath = <S>(paths: string[]): CheckValueChangedInPath<S, boolean> => (
 	keys: unknown[],

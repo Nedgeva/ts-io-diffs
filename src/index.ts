@@ -16,7 +16,11 @@ import {
 } from './type';
 import { extractFlags } from './flags';
 import { defaultConfig, TsToIoConfig, DEFAULT_FILE_NAME, getCliConfig, displayHelp } from './config';
-import { diffUtils, generateCheckValueChangedInPathInterface } from './comparer/comparer.utils';
+import {
+	diffUtils,
+	generateCheckValueChangedInPathInterface,
+	makeLookupForChangedPathUtils,
+} from './comparer/comparer.utils';
 
 let foundKeypaths: string[][] = [];
 let bufferKeypath: string[] = [];
@@ -143,7 +147,21 @@ function handleDeclaration(
 		const currentIterationDeepestIndex = foundKeypaths.reduce((acc, v) => (v.length > acc ? v.length : acc), 0);
 		deepestIndex = Math.max(deepestIndex, currentIterationDeepestIndex);
 
-		console.log(foundKeypaths);
+		// move to comparer utils
+		console.log(
+			`const diffPathsFor${symbol!.name} = getPathsOfChangedValues(${symbol!.name}.asEncoder(), prev${
+				symbol!.name
+			}, current${symbol!.name})`,
+		);
+
+		console.log(
+			`const lookupForChangedPathsIn${symbol!.name} = checkIfValueChangedInRootPath<OutputOf<typeof ${
+				symbol?.name
+			}>>(diffPathsFor${symbol!.name})`,
+		);
+
+		console.log(makeLookupForChangedPathUtils(foundKeypaths, symbol!.name).join('\n'));
+
 		return `const ${symbol!.name} = ` + processType(checker)(type);
 	} catch (e) {
 		return `// Error: Failed to generate a codec for ${symbol ? symbol.name : ''}`;
