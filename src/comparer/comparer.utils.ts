@@ -25,7 +25,6 @@ import { Predicate, constant } from 'fp-ts/lib/function';
 import { getOrElse, none, some } from 'fp-ts/lib/Option';
 import { array } from 'fp-ts';
 import { pipe } from 'fp-ts/lib/pipeable';
-import { Encoder } from 'io-ts';
 
 const getOrConstant = <A>(a: A) => getOrElse(constant<A>(a));
 const isBlank: Predicate<string> = value => !value.trim().length;
@@ -37,7 +36,7 @@ export const getPathsOfEncodedChangedValues = <T>(prevValue: T, currValue: T): s
 		.filter(operation => operation.op === 'replace')
 		.map(operation => operation.path);
 
-export const getPathsOfChangedValues = <T, O>(encoder: Encoder<T, O>, prevValue: T, currValue: T): string[] => {
+export const getPathsOfChangedValues = <T, O>(encoder: t.Encoder<T, O>, prevValue: T, currValue: T): string[] => {
 	// restore original JSON representation of model
 	const prevValueEncoded = encoder.encode(prevValue);
 	const currValueEncoded = encoder.encode(currValue);
@@ -46,7 +45,7 @@ export const getPathsOfChangedValues = <T, O>(encoder: Encoder<T, O>, prevValue:
 };
 
 const getPatchesOfChangedValues = <T, O>(
-	encoder: Encoder<T, O>,
+	encoder: t.Encoder<T, O>,
 	prevValue: T,
 	currValue: T,
 ): ReplaceOperation<unknown>[] => {
@@ -66,7 +65,7 @@ const getKeyPaths = (keys: unknown[]) => \`/\${keys.join('/')}\`;
 
 export const checkIfValueChangedInRootPath = <S>(paths: string[]): CheckValueChangedInPath<S, boolean> => (
 	keys: unknown[],
-) => keys.some((v, i, a) => paths.includes(getKeyPaths(a.slice(0, i))));
+) => paths.some(path => path.startsWith(getKeyPaths(keys)));
 
 export const checkIfValueChangedInPath = <S>(paths: string[]): CheckValueChangedInPath<S, boolean> => (
 	keys: unknown[],

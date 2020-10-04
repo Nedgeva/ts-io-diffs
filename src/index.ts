@@ -155,7 +155,7 @@ function handleDeclaration(
 		);
 
 		console.log(
-			`const lookupForChangedPathsIn${symbol!.name} = checkIfValueChangedInRootPath<OutputOf<typeof ${
+			`const lookupForChangedPathsIn${symbol!.name} = checkIfValueChangedInRootPath<t.OutputOf<typeof ${
 				symbol?.name
 			}>>(diffPathsFor${symbol!.name})`,
 		);
