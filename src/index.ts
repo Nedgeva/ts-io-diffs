@@ -122,6 +122,37 @@ const processType = (checker: ts.TypeChecker) => (type: ts.Type): string => {
 	throw Error('Unknown type with type flags: ' + extractFlags(type.flags));
 };
 
+function handleDeclarationForComparisonUtils(
+	node: ts.TypeAliasDeclaration | ts.InterfaceDeclaration | ts.VariableStatement,
+	checker: ts.TypeChecker,
+) {
+	let symbol, type;
+	try {
+		if (node.kind === ts.SyntaxKind.VariableStatement) {
+			symbol = checker.getSymbolAtLocation(node.declarationList.declarations[0].name);
+			type = checker.getTypeOfSymbolAtLocation(symbol!, symbol!.valueDeclaration!);
+		} else {
+			symbol = checker.getSymbolAtLocation(node.name);
+			type = checker.getTypeAtLocation(node);
+		}
+
+		// TODO: remove globals
+		// TODO: move out repetetive code
+		foundKeypaths = [];
+		bufferKeypath = [];
+		activeIndex = 0;
+
+		processTypeForDiffPathBuilder(checker, type);
+
+		const currentIterationDeepestIndex = foundKeypaths.reduce((acc, v) => (v.length > acc ? v.length : acc), 0);
+		deepestIndex = Math.max(deepestIndex, currentIterationDeepestIndex);
+
+		return makeLookupForChangedPathUtils(foundKeypaths, symbol!.name);
+	} catch (e) {
+		return `// Error: Failed to generate a codec for ${symbol ? symbol.name : ''}`;
+	}
+}
+
 function handleDeclaration(
 	node: ts.TypeAliasDeclaration | ts.InterfaceDeclaration | ts.VariableStatement,
 	checker: ts.TypeChecker,
@@ -136,32 +167,6 @@ function handleDeclaration(
 			type = checker.getTypeAtLocation(node);
 		}
 
-		// here add routine for generating
-		foundKeypaths = [];
-		bufferKeypath = [];
-		activeIndex = 0;
-
-		// move out from handleDeclaration
-		processTypeForDiffPathBuilder(checker, type);
-
-		const currentIterationDeepestIndex = foundKeypaths.reduce((acc, v) => (v.length > acc ? v.length : acc), 0);
-		deepestIndex = Math.max(deepestIndex, currentIterationDeepestIndex);
-
-		// move to comparer utils
-		console.log(
-			`const diffPathsFor${symbol!.name} = getPathsOfChangedValues(${symbol!.name}.asEncoder(), prev${
-				symbol!.name
-			}, current${symbol!.name})`,
-		);
-
-		console.log(
-			`const lookupForChangedPathsIn${symbol!.name} = checkIfValueChangedInRootPath<t.OutputOf<typeof ${
-				symbol?.name
-			}>>(diffPathsFor${symbol!.name})`,
-		);
-
-		console.log(makeLookupForChangedPathUtils(foundKeypaths, symbol!.name).join('\n'));
-
 		return `const ${symbol!.name} = ` + processType(checker)(type);
 	} catch (e) {
 		return `// Error: Failed to generate a codec for ${symbol ? symbol.name : ''}`;
@@ -174,6 +179,7 @@ const visit = (checker: ts.TypeChecker, config: TsToIoConfig, result: string[]) 
 	}
 	if (ts.isTypeAliasDeclaration(node) || ts.isVariableStatement(node) || ts.isInterfaceDeclaration(node)) {
 		result.push(handleDeclaration(node, checker));
+		result.push(handleDeclarationForComparisonUtils(node, checker));
 	} else if (ts.isModuleDeclaration(node)) {
 		ts.forEachChild(node, visit(checker, config, result));
 	}

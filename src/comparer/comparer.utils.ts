@@ -12,12 +12,16 @@ export const generateCheckValueChangedInPathInterface = (overloads: number) =>
 }`;
 
 export const makeLookupForChangedPathUtils = (allKeyPaths: string[][], codecName: string) =>
-	allKeyPaths.map(
-		keyPaths =>
-			`const is${keyPaths.join('')}In${codecName}Changed = lookupForChangedPathsIn${codecName}(['${keyPaths.join(
-				"', '",
-			)}'])`,
-	);
+	`const diffPathsFor${codecName} = getPathsOfChangedValues(${codecName}.asEncoder(), prev${codecName}, current${codecName});
+	const lookupForChangedPathsIn${codecName} = checkIfValueChangedInRootPath<t.OutputOf<typeof ${codecName}>>(diffPathsFor${codecName});\n` +
+	allKeyPaths
+		.map(
+			keyPaths =>
+				`const is${keyPaths.join(
+					'',
+				)}In${codecName}Changed = lookupForChangedPathsIn${codecName}(['${keyPaths.join("', '")}'])`,
+		)
+		.join('\n');
 
 export const diffUtils = `
 import { Operation, ReplaceOperation, compare } from 'fast-json-patch';
@@ -74,6 +78,7 @@ export const checkIfValueChangedInPath = <S>(paths: string[]): CheckValueChanged
 const checkIsValueNullOrEmptyString = (value: unknown) =>
 	value === null || (typeof value === 'string' && isBlank(value));
 
+// FIXME: patches for root check
 export const getChangeTypeOfChangedValueInPath = <S>(
 	ops: ReplaceOperation<unknown>[],
 	checkIsValueChanged = checkIsValueNullOrEmptyString,
