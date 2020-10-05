@@ -22,12 +22,22 @@ import {
 	makeLookupForChangedPathUtils,
 } from './comparer/comparer.utils';
 
-let foundKeypaths: string[][] = [];
+interface Store {
+	foundKeypaths: string[][];
+	bufferKeypath: string[];
+	activeIndex: number;
+	deepestIndex: number;
+	result: string[];
+}
+
+/* let foundKeypaths: string[][] = [];
 let bufferKeypath: string[] = [];
 let activeIndex = 0;
-let deepestIndex = 0;
+let deepestIndex = 0; */
 
-const processPropertyKey = (checker: ts.TypeChecker) => (s: ts.Symbol) => {
+const processPropertyKey = (checker: ts.TypeChecker, store: Store) => (s: ts.Symbol) => {
+	const { foundKeypaths, bufferKeypath, activeIndex } = store;
+
 	const key = s.name;
 
 	if (Array.isArray(foundKeypaths[activeIndex])) {
@@ -39,12 +49,12 @@ const processPropertyKey = (checker: ts.TypeChecker) => (s: ts.Symbol) => {
 
 	const nextSymbolType = checker.getTypeOfSymbolAtLocation(s, s.valueDeclaration);
 
-	activeIndex++;
+	store.activeIndex++;
 
 	if (isObjectType(nextSymbolType)) {
 		bufferKeypath.push(key);
 		const properties = checker.getPropertiesOfType(nextSymbolType);
-		properties.forEach(processPropertyKey(checker));
+		properties.forEach(processPropertyKey(checker, store));
 		bufferKeypath.shift();
 	}
 };
@@ -74,10 +84,10 @@ const processObjectType = (checker: ts.TypeChecker) => (type: ts.ObjectType) => 
 	}
 };
 
-const processTypeForDiffPathBuilder = (checker: ts.TypeChecker, type: ts.Type) => {
+const processTypeForDiffPathBuilder = (checker: ts.TypeChecker, type: ts.Type, store: Store) => {
 	if (isObjectType(type)) {
 		const properties = checker.getPropertiesOfType(type);
-		properties.forEach(processPropertyKey(checker));
+		properties.forEach(processPropertyKey(checker, store));
 	}
 };
 
@@ -125,6 +135,7 @@ const processType = (checker: ts.TypeChecker) => (type: ts.Type): string => {
 function handleDeclarationForComparisonUtils(
 	node: ts.TypeAliasDeclaration | ts.InterfaceDeclaration | ts.VariableStatement,
 	checker: ts.TypeChecker,
+	store: Store,
 ) {
 	let symbol, type;
 	try {
@@ -136,18 +147,20 @@ function handleDeclarationForComparisonUtils(
 			type = checker.getTypeAtLocation(node);
 		}
 
-		// TODO: remove globals
 		// TODO: move out repetetive code
-		foundKeypaths = [];
-		bufferKeypath = [];
-		activeIndex = 0;
+		store.foundKeypaths = [];
+		store.bufferKeypath = [];
+		store.activeIndex = 0;
 
-		processTypeForDiffPathBuilder(checker, type);
+		processTypeForDiffPathBuilder(checker, type, store);
 
-		const currentIterationDeepestIndex = foundKeypaths.reduce((acc, v) => (v.length > acc ? v.length : acc), 0);
-		deepestIndex = Math.max(deepestIndex, currentIterationDeepestIndex);
+		const currentIterationDeepestIndex = store.foundKeypaths.reduce(
+			(acc, v) => (v.length > acc ? v.length : acc),
+			0,
+		);
+		store.deepestIndex = Math.max(store.deepestIndex, currentIterationDeepestIndex);
 
-		return makeLookupForChangedPathUtils(foundKeypaths, symbol!.name);
+		return makeLookupForChangedPathUtils(store.foundKeypaths, symbol!.name);
 	} catch (e) {
 		return `// Error: Failed to generate a codec for ${symbol ? symbol.name : ''}`;
 	}
@@ -173,15 +186,15 @@ function handleDeclaration(
 	}
 }
 
-const visit = (checker: ts.TypeChecker, config: TsToIoConfig, result: string[]) => (node: ts.Node) => {
+const visit = (checker: ts.TypeChecker, config: TsToIoConfig, store: Store) => (node: ts.Node) => {
 	if (!config.followImports && !config.fileNames.includes(node.getSourceFile().fileName)) {
 		return;
 	}
 	if (ts.isTypeAliasDeclaration(node) || ts.isVariableStatement(node) || ts.isInterfaceDeclaration(node)) {
-		result.push(handleDeclaration(node, checker));
-		result.push(handleDeclarationForComparisonUtils(node, checker));
+		store.result.push(handleDeclaration(node, checker));
+		store.result.push(handleDeclarationForComparisonUtils(node, checker, store));
 	} else if (ts.isModuleDeclaration(node)) {
-		ts.forEachChild(node, visit(checker, config, result));
+		ts.forEachChild(node, visit(checker, config, store));
 	}
 };
 
@@ -205,11 +218,20 @@ export function getValidatorsFromString(source: string, config = { ...defaultCon
 		},
 	};
 
+	// @mutable
+	const store: Store = {
+		foundKeypaths: [],
+		bufferKeypath: [],
+		activeIndex: 0,
+		deepestIndex: 0,
+		result: config.includeHeader ? [getImports()] : [],
+	};
+
 	const program = ts.createProgram([DEFAULT_FILE_NAME], compilerOptions, compilerHostOptions);
 	const checker = program.getTypeChecker();
-	const result = config.includeHeader ? [getImports()] : [];
-	ts.forEachChild(program.getSourceFile(DEFAULT_FILE_NAME)!, visit(checker, config, result));
-	return result.join('\n\n');
+
+	ts.forEachChild(program.getSourceFile(DEFAULT_FILE_NAME)!, visit(checker, config, store));
+	return store.result.join('\n\n');
 }
 
 export function getValidatorsFromFileNames() {
@@ -221,23 +243,31 @@ export function getValidatorsFromFileNames() {
 
 	const program = ts.createProgram(config.fileNames, compilerOptions);
 	const checker = program.getTypeChecker();
-	const result: string[] = [];
+
+	// @mutable
+	const store: Store = {
+		foundKeypaths: [],
+		bufferKeypath: [],
+		activeIndex: 0,
+		deepestIndex: 0,
+		result: [],
+	};
 
 	for (const sourceFile of program.getSourceFiles()) {
 		if (!sourceFile.isDeclarationFile) {
-			ts.forEachChild(sourceFile, visit(checker, config, result));
+			ts.forEachChild(sourceFile, visit(checker, config, store));
 		}
 	}
 
 	// if (config.includeDiffCheck) {
 
-	result.unshift(generateCheckValueChangedInPathInterface(deepestIndex));
+	store.result.unshift(generateCheckValueChangedInPathInterface(store.deepestIndex));
 
-	result.unshift(diffUtils);
+	store.result.unshift(diffUtils);
 
 	if (config.includeHeader) {
-		result.unshift(getImports());
+		store.result.unshift(getImports());
 	}
 
-	return prettier.format(result.join('\n\n'), { parser: 'typescript' });
+	return prettier.format(store.result.join('\n\n'), { parser: 'typescript' });
 }
