@@ -30,10 +30,13 @@ interface Store {
 	result: string[];
 }
 
-/* let foundKeypaths: string[][] = [];
-let bufferKeypath: string[] = [];
-let activeIndex = 0;
-let deepestIndex = 0; */
+const createStore = (): Store => ({
+	foundKeypaths: [],
+	bufferKeypath: [],
+	activeIndex: 0,
+	deepestIndex: 0,
+	result: [],
+});
 
 const processPropertyKey = (checker: ts.TypeChecker, store: Store) => (s: ts.Symbol) => {
 	const { foundKeypaths, bufferKeypath, activeIndex } = store;
@@ -219,13 +222,7 @@ export function getValidatorsFromString(source: string, config = { ...defaultCon
 	};
 
 	// @mutable
-	const store: Store = {
-		foundKeypaths: [],
-		bufferKeypath: [],
-		activeIndex: 0,
-		deepestIndex: 0,
-		result: config.includeHeader ? [getImports()] : [],
-	};
+	const store = createStore();
 
 	const program = ts.createProgram([DEFAULT_FILE_NAME], compilerOptions, compilerHostOptions);
 	const checker = program.getTypeChecker();
@@ -245,13 +242,7 @@ export function getValidatorsFromFileNames() {
 	const checker = program.getTypeChecker();
 
 	// @mutable
-	const store: Store = {
-		foundKeypaths: [],
-		bufferKeypath: [],
-		activeIndex: 0,
-		deepestIndex: 0,
-		result: [],
-	};
+	const store = createStore();
 
 	for (const sourceFile of program.getSourceFiles()) {
 		if (!sourceFile.isDeclarationFile) {
