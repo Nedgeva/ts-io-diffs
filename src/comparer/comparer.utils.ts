@@ -78,7 +78,7 @@ export const checkIfValueChangedInPath = <S>(paths: string[]): CheckValueChanged
 const checkIsValueNullOrEmptyString = (value: unknown) =>
 	value === null || (typeof value === 'string' && isBlank(value));
 
-// TODO: need heavy testing
+// TODO: needs heavy testing
 export const getChangeTypeOfChangedValueInPath = <S>(
 	ops: ReplaceOperation<unknown>[],
 	checkIsValueChanged = checkIsValueNullOrEmptyString,
@@ -87,14 +87,20 @@ export const getChangeTypeOfChangedValueInPath = <S>(
 		pipe(
 			ops,
 			array.findFirstMap(op => {
+				if (!keys.length) {
+					return some<ChangeType>('REPLACED');
+				}
+
 				const keyPath = getKeyPaths(keys);
 
-				return keyPath.startsWith(op.path)
+				return op.path.startsWith(keyPath)
 					? op.path === keyPath
 						? checkIsValueChanged(op.value)
 							? some<ChangeType>('REMOVED')
 							: some<ChangeType>('REPLACED')
 						: some<ChangeType>(findChangeTypeByKeys(keys.slice(0, -1)))
+					: keys.length > 1
+					? some(findChangeTypeByKeys(keys.slice(0, -1)))
 					: none;
 			}),
 			getOrConstant<ChangeType>('NO_CHANGES_FOUND'),
