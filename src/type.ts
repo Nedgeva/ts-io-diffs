@@ -59,3 +59,8 @@ export function isLiteralType(type: ts.Type) {
 		[ts.TypeFlags.StringLiteral, ts.TypeFlags.NumberLiteral, ts.TypeFlags.BooleanLiteral].includes(f),
 	);
 }
+
+/* TODO: make fn */
+export function isFPTSOptionType(type: ts.Type) {
+	return;
+}
