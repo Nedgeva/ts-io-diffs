@@ -62,5 +62,5 @@ export function isLiteralType(type: ts.Type) {
 
 /* TODO: make fn */
 export function isFPTSOptionType(type: ts.Type) {
-	return;
+	return false;
 }

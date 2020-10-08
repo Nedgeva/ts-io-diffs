@@ -13,6 +13,7 @@ import {
 	isFunctionType,
 	isBasicObjectType,
 	isLiteralType,
+	isFPTSOptionType,
 } from './type';
 import { extractFlags } from './flags';
 import { defaultConfig, TsToIoConfig, DEFAULT_FILE_NAME, getCliConfig, displayHelp } from './config';
@@ -21,6 +22,7 @@ import {
 	generateCheckValueChangedInPathInterface,
 	makeLookupForChangedPathUtils,
 } from './comparer/comparer.utils';
+import { debug } from 'console';
 
 interface Store {
 	foundKeypaths: string[][];
@@ -95,7 +97,9 @@ const processTypeForDiffPathBuilder = (checker: ts.TypeChecker, type: ts.Type, s
 };
 
 const processType = (checker: ts.TypeChecker) => (type: ts.Type): string => {
-	if (isLiteralType(type)) {
+	if (isFPTSOptionType(type)) {
+		return `t`;
+	} else if (isLiteralType(type)) {
 		return 't.literal(' + checker.typeToString(type) + ')';
 	} else if (isPrimitiveType(type)) {
 		return 't.' + checker.typeToString(type);
@@ -193,6 +197,7 @@ const visit = (checker: ts.TypeChecker, config: TsToIoConfig, store: Store) => (
 	if (!config.followImports && !config.fileNames.includes(node.getSourceFile().fileName)) {
 		return;
 	}
+	debugger;
 	if (ts.isTypeAliasDeclaration(node) || ts.isVariableStatement(node) || ts.isInterfaceDeclaration(node)) {
 		store.result.push(handleDeclaration(node, checker));
 		store.result.push(handleDeclarationForComparisonUtils(node, checker, store));
