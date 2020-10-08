@@ -67,7 +67,7 @@ interface SymbolWithParentNode extends ts.Symbol {
 
 export function isFPTSOptionType(type: ts.Type) {
 	const isRefinedSymbol = (value: ts.Symbol | undefined): value is SymbolWithParentNode =>
-		!!type.aliasSymbol && Reflect.has(type.aliasSymbol, 'parent');
+		!!value && Reflect.has(value, 'parent');
 
 	return isRefinedSymbol(type.aliasSymbol) && type.aliasSymbol.parent.name.endsWith('fp-ts/lib/Option"');
 }
