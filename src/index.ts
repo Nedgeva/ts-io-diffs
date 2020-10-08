@@ -98,7 +98,8 @@ const processTypeForDiffPathBuilder = (checker: ts.TypeChecker, type: ts.Type, s
 
 const processType = (checker: ts.TypeChecker) => (type: ts.Type): string => {
 	if (isFPTSOptionType(type)) {
-		return `t`;
+		console.log('hit');
+		return `optionFromNullable(${processType(checker)(type.aliasTypeArguments![0])})`;
 	} else if (isLiteralType(type)) {
 		return 't.literal(' + checker.typeToString(type) + ')';
 	} else if (isPrimitiveType(type)) {
@@ -197,7 +198,7 @@ const visit = (checker: ts.TypeChecker, config: TsToIoConfig, store: Store) => (
 	if (!config.followImports && !config.fileNames.includes(node.getSourceFile().fileName)) {
 		return;
 	}
-	debugger;
+
 	if (ts.isTypeAliasDeclaration(node) || ts.isVariableStatement(node) || ts.isInterfaceDeclaration(node)) {
 		store.result.push(handleDeclaration(node, checker));
 		store.result.push(handleDeclarationForComparisonUtils(node, checker, store));
@@ -207,7 +208,8 @@ const visit = (checker: ts.TypeChecker, config: TsToIoConfig, store: Store) => (
 };
 
 const getImports = () => {
-	return `import * as t from "io-ts"`;
+	return `import * as t from "io-ts";
+	import { optionFromNullable } from 'io-ts-types/lib/optionFromNullable';`;
 };
 
 const compilerOptions: ts.CompilerOptions = {

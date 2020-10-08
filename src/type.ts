@@ -61,6 +61,13 @@ export function isLiteralType(type: ts.Type) {
 }
 
 /* TODO: make fn */
+interface SymbolWithParentNode extends ts.Symbol {
+	readonly parent: ts.Symbol;
+}
+
 export function isFPTSOptionType(type: ts.Type) {
-	return false;
+	const isRefinedSymbol = (value: ts.Symbol | undefined): value is SymbolWithParentNode =>
+		!!type.aliasSymbol && Reflect.has(type.aliasSymbol, 'parent');
+
+	return isRefinedSymbol(type.aliasSymbol) && type.aliasSymbol.parent.name.endsWith('fp-ts/lib/Option"');
 }
