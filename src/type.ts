@@ -60,14 +60,16 @@ export function isLiteralType(type: ts.Type) {
 	);
 }
 
-/* TODO: make fn */
-interface SymbolWithParentNode extends ts.Symbol {
-	readonly parent: ts.Symbol;
+interface TypeWithReferencedTypes extends ts.Type {
+	readonly types: ts.Type[];
 }
 
 export function isFPTSOptionType(type: ts.Type) {
-	const isRefinedSymbol = (value: ts.Symbol | undefined): value is SymbolWithParentNode =>
-		!!value && Reflect.has(value, 'parent');
+	const fptsOptionTypeNames = ['None', 'Some'];
+	const hasReferencedTypes = (value: ts.Type): value is TypeWithReferencedTypes =>
+		Array.isArray(Reflect.get(value, 'types'));
 
-	return isRefinedSymbol(type.aliasSymbol) && type.aliasSymbol.parent.name.endsWith('fp-ts/lib/Option"');
+	return (
+		hasReferencedTypes(type) && type.types.every(t => fptsOptionTypeNames.includes(t.symbol.escapedName.toString()))
+	);
 }
