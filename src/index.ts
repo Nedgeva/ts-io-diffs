@@ -200,7 +200,7 @@ const visit = (checker: ts.TypeChecker, config: TsToIoConfig, store: Store) => (
 
 	if (ts.isTypeAliasDeclaration(node) || ts.isVariableStatement(node) || ts.isInterfaceDeclaration(node)) {
 		store.result.push(handleDeclaration(node, checker));
-		store.result.push(handleDeclarationForComparisonUtils(node, checker, store));
+		config.diffCheckUtils && store.result.push(handleDeclarationForComparisonUtils(node, checker, store));
 	} else if (ts.isModuleDeclaration(node)) {
 		ts.forEachChild(node, visit(checker, config, store));
 	}
@@ -256,11 +256,9 @@ export function getValidatorsFromFileNames() {
 		}
 	}
 
-	// if (config.includeDiffCheck) {
-
-	store.result.unshift(generateCheckValueChangedInPathInterface(store.deepestIndex));
-
-	store.result.unshift(diffUtils);
+	if (config.diffCheckUtils) {
+		store.result.unshift(generateCheckValueChangedInPathInterface(store.deepestIndex), diffUtils);
+	}
 
 	if (config.includeHeader) {
 		store.result.unshift(getImports());
