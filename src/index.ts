@@ -22,7 +22,6 @@ import {
 	generateCheckValueChangedInPathInterface,
 	makeLookupForChangedPathUtils,
 } from './comparer/comparer.utils';
-import { debug } from 'console';
 
 interface Store {
 	foundKeypaths: string[][];
