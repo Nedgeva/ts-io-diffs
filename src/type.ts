@@ -43,7 +43,7 @@ export function isNumberIndexedType(type: ts.Type) {
 }
 
 export function isArrayType(type: ts.Type) {
-	return type.symbol.name === 'Array';
+	return type.symbol && type.symbol.name === 'Array';
 }
 
 export function isFunctionType(type: ts.Type) {
@@ -70,6 +70,7 @@ export function isFPTSOptionType(type: ts.Type) {
 		Array.isArray(Reflect.get(value, 'types'));
 
 	return (
-		hasReferencedTypes(type) && type.types.every(t => fptsOptionTypeNames.includes(t.symbol.escapedName.toString()))
+		hasReferencedTypes(type) &&
+		type.types.every(t => t.symbol && fptsOptionTypeNames.includes(t.symbol.escapedName.toString()))
 	);
 }

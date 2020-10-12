@@ -168,7 +168,7 @@ function handleDeclarationForComparisonUtils(
 
 		return makeLookupForChangedPathUtils(store.foundKeypaths, symbol!.name);
 	} catch (e) {
-		return `// Error: Failed to generate a codec for ${symbol ? symbol.name : ''}`;
+		return `// Error: Failed to generate a diff utils for ${symbol ? symbol.name : ''}`;
 	}
 }
 
@@ -228,6 +228,10 @@ export function getValidatorsFromString(source: string, config = { ...defaultCon
 
 	// @mutable
 	const store = createStore();
+
+	if (config.includeHeader) {
+		store.result.unshift(getImports());
+	}
 
 	const program = ts.createProgram([DEFAULT_FILE_NAME], compilerOptions, compilerHostOptions);
 	const checker = program.getTypeChecker();

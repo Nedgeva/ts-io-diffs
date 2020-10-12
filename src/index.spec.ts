@@ -1,11 +1,12 @@
 import { getValidatorsFromString } from '.';
 import { extractFlags } from './flags';
-import { defaultConfig, DEFAULT_FILE_NAME } from './config';
+import { defaultConfig, DEFAULT_FILE_NAME, TsToIoConfig } from './config';
 
-const testConfig = {
+const testConfig: TsToIoConfig = {
 	...defaultConfig,
 	fileNames: [DEFAULT_FILE_NAME],
 	includeHeader: false,
+	diffCheckUtils: false,
 };
 
 describe('Generate io-ts validators', () => {
@@ -89,6 +90,15 @@ describe('Generate io-ts validators', () => {
 			'const foobar = t.union([t.null, t.literal("foo"), t.literal("bar")])',
 		);
 	});
+
+	test('handles void types correctly', () => {
+		expect(getValidatorsFromString('type foobar = void', testConfig)).toBe('const foobar = t.void');
+	});
+
+	test('handles any and unknown types correctly', () => {
+		expect(getValidatorsFromString('type foo = any', testConfig)).toBe('const foo = t.unknown');
+		expect(getValidatorsFromString('type bar = unknown', testConfig)).toBe('const bar = t.unknown');
+	});
 });
 
 describe('Configuration', () => {
@@ -99,12 +109,15 @@ describe('Configuration', () => {
 				...testConfig,
 				includeHeader: true,
 			}),
-		).toBe('import * as t from "io-ts"\n\nconst a = t.number');
+		).toBe(
+			'import * as t from "io-ts";\n\timport { optionFromNullable } from \'io-ts-types/lib/optionFromNullable\';\n\nconst a = t.number',
+		);
 	});
 });
 
 describe('Internals', () => {
 	test('gets binary flags', () => {
+		expect(extractFlags(-1)).toEqual([]);
 		expect(extractFlags(0)).toEqual([]);
 		expect(extractFlags(1)).toEqual([1]);
 		expect(extractFlags(10)).toEqual([8, 2]);
