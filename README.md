@@ -8,7 +8,12 @@ Given two objects (POJOs) with same type T, generate utils which allow you to ch
 
 ### Installation
 
-TODO: clone repo, run yarn...
+```
+git clone
+yarn
+yarn build
+node .\cli.js --follow-imports path/to/your/file.ts
+```
 
 ### Example
 
