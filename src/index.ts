@@ -61,6 +61,12 @@ const processPropertyKey = (checker: ts.TypeChecker, store: Store) => (s: ts.Sym
 		properties.forEach(processPropertyKey(checker, store));
 		bufferKeypath.shift();
 	}
+	if (isFPTSOptionType(nextSymbolType)) {
+		bufferKeypath.push(key);
+		const properties = checker.getPropertiesOfType(nextSymbolType);
+		properties.forEach(processPropertyKey(checker, store));
+		bufferKeypath.shift();
+	}
 };
 
 const processProperty = (checker: ts.TypeChecker) => (s: ts.Symbol) => {
@@ -90,10 +96,6 @@ const processObjectType = (checker: ts.TypeChecker) => (type: ts.ObjectType) => 
 
 const processTypeForDiffPathBuilder = (checker: ts.TypeChecker, type: ts.Type, store: Store) => {
 	if (isObjectType(type)) {
-		const properties = checker.getPropertiesOfType(type);
-		properties.forEach(processPropertyKey(checker, store));
-	}
-	if (isFPTSOptionType(type)) {
 		const properties = checker.getPropertiesOfType(type);
 		properties.forEach(processPropertyKey(checker, store));
 	}
