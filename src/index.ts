@@ -93,6 +93,10 @@ const processTypeForDiffPathBuilder = (checker: ts.TypeChecker, type: ts.Type, s
 		const properties = checker.getPropertiesOfType(type);
 		properties.forEach(processPropertyKey(checker, store));
 	}
+	if (isFPTSOptionType(type)) {
+		const properties = checker.getPropertiesOfType(type);
+		properties.forEach(processPropertyKey(checker, store));
+	}
 };
 
 const processType = (checker: ts.TypeChecker) => (type: ts.Type): string => {
