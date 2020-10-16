@@ -63,7 +63,7 @@ const processPropertyKey = (checker: ts.TypeChecker, store: Store) => (s: ts.Sym
 	}
 	if (isFPTSOptionType(nextSymbolType)) {
 		bufferKeypath.push(key);
-		const properties = checker.getPropertiesOfType(nextSymbolType);
+		const properties = checker.getPropertiesOfType(nextSymbolType.aliasTypeArguments![0]);
 		properties.forEach(processPropertyKey(checker, store));
 		bufferKeypath.shift();
 	}
