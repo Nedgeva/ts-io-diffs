@@ -20,15 +20,16 @@ node .\cli.js --follow-imports path/to/your/file.ts
 Let's assume that you have some model of following shape:
 
 ```typescript
+import { Option } from 'fp-ts/lib/Option';
 type Test = {
 	a: string;
 	b: number;
-	c: {
+	c: Option<{
 		d: boolean;
 		e: {
 			f: string;
 		};
-	};
+	}>;
 	g: string;
 };
 ```
@@ -36,8 +37,8 @@ type Test = {
 and you want to get diff between two objects of abovementioned type:
 
 ```typescript
-const prev: Test = { a: 'foo', b: 777, c: { d: true, e: { f: 'bax' } }, g: 'lol' };
-const current: Test = { a: 'foo', b: 123, c: { d: false, e: { f: 'baz' } }, g: 'lawl' };
+const prevTest: Test = { a: 'foo', b: 777, c: some({ d: true, e: { f: 'azaza' } }), g: 'lol' };
+const currentTest: Test = { a: 'bar', b: 777, c: some({ d: false, e: { f: 'azaz' } }), g: 'lol' };
 ```
 
 #### TODO
