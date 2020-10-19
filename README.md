@@ -41,6 +41,8 @@ const prevTest: Test = { a: 'foo', b: 777, c: some({ d: true, e: { f: 'azaza' } 
 const currentTest: Test = { a: 'bar', b: 777, c: some({ d: false, e: { f: 'azaz' } }), g: 'lol' };
 ```
 
+then you can expect following output:
+
 #### TODO
 
 Add detailed description of diff checking mechanism.
