@@ -41,7 +41,19 @@ const prevTest: Test = { a: 'foo', b: 777, c: some({ d: true, e: { f: 'azaza' } 
 const currentTest: Test = { a: 'bar', b: 777, c: some({ d: false, e: { f: 'azaz' } }), g: 'lol' };
 ```
 
-then you can expect following output:
+then you can expect following utils to be generated:
+
+```typescript
+const diffPathsForTest = getPathsOfChangedValues(Test.asEncoder(), prevTest, currentTest);
+const lookupForChangedPathsInTest = checkIfValueChangedInRootPath<t.OutputOf<typeof Test>>(diffPathsForTest);
+const isaInTestChanged = lookupForChangedPathsInTest(['a']);
+const isbInTestChanged = lookupForChangedPathsInTest(['b']);
+const iscInTestChanged = lookupForChangedPathsInTest(['c']);
+const iscdInTestChanged = lookupForChangedPathsInTest(['c', 'd']);
+const isceInTestChanged = lookupForChangedPathsInTest(['c', 'e']);
+const iscefInTestChanged = lookupForChangedPathsInTest(['c', 'e', 'f']);
+const isgInTestChanged = lookupForChangedPathsInTest(['g']);
+```
 
 #### TODO
 
