@@ -55,6 +55,20 @@ const iscefInTestChanged = lookupForChangedPathsInTest(['c', 'e', 'f']);
 const isgInTestChanged = lookupForChangedPathsInTest(['g']);
 ```
 
+or alternatively get utils like this:
+
+```typescript
+const diffPathsForTest = getPatchesOfChangedValues(Test.asEncoder(), prevTest, currentTest);
+const lookupForChangedPathsInTest = getChangeTypeOfChangedValueInPath<t.OutputOf<typeof Test>>(diffPathsForTest);
+const getChangeTypeOfaInTest = lookupForChangedPathsInTest(['a']);
+const getChangeTypeOfbInTest = lookupForChangedPathsInTest(['b']);
+const getChangeTypeOfcInTest = lookupForChangedPathsInTest(['c']);
+const getChangeTypeOfcdInTest = lookupForChangedPathsInTest(['c', 'd']);
+const getChangeTypeOfceInTest = lookupForChangedPathsInTest(['c', 'e']);
+const getChangeTypeOfcefInTest = lookupForChangedPathsInTest(['c', 'e', 'f']);
+const getChangeTypeOfgInTest = lookupForChangedPathsInTest(['g']);
+```
+
 #### TODO
 
 Add detailed description of diff checking mechanism.
