@@ -48,7 +48,7 @@ export const getPathsOfChangedValues = <T, O>(encoder: t.Encoder<T, O>, prevValu
 	return getPathsOfEncodedChangedValues(prevValueEncoded, currValueEncoded);
 };
 
-const getPatchesOfChangedValues = <T, O>(
+export const getPatchesOfChangedValues = <T, O>(
 	encoder: t.Encoder<T, O>,
 	prevValue: T,
 	currValue: T,
