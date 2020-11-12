@@ -1,3 +1,4 @@
+import path from 'path';
 import prettier from 'prettier';
 import * as ts from 'typescript';
 import {
@@ -199,7 +200,13 @@ function handleDeclaration(
 }
 
 const visit = (checker: ts.TypeChecker, config: TsToIoConfig, store: Store) => (node: ts.Node) => {
-	if (!config.followImports && !config.fileNames.includes(node.getSourceFile().fileName)) {
+	if (
+		!config.followImports &&
+		config.fileNames.every(f => {
+			console.log(path.resolve(f), (node.getSourceFile() as any).resolvedPath);
+			path.resolve(f) !== (node.getSourceFile() as any).resolvedPath;
+		})
+	) {
 		return;
 	}
 
