@@ -40,6 +40,8 @@ const createStore = (): Store => ({
 	result: [],
 });
 
+const normalizePath = (path: string) => (process.platform === 'win32' ? path.toLocaleLowerCase() : path);
+
 const processPropertyKey = (checker: ts.TypeChecker, store: Store) => (s: ts.Symbol) => {
 	const { foundKeypaths, bufferKeypath, activeIndex } = store;
 
@@ -202,10 +204,11 @@ function handleDeclaration(
 const visit = (checker: ts.TypeChecker, config: TsToIoConfig, store: Store) => (node: ts.Node) => {
 	if (
 		!config.followImports &&
-		config.fileNames.every(f => {
-			console.log(path.resolve(f), (node.getSourceFile() as any).resolvedPath);
-			path.resolve(f) !== (node.getSourceFile() as any).resolvedPath;
-		})
+		config.fileNames.every(
+			f =>
+				normalizePath(path.resolve(f)) !==
+				normalizePath(path.resolve((node.getSourceFile() as any).resolvedPath)),
+		)
 	) {
 		return;
 	}
